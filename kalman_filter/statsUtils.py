@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from numpy.linalg import inv
+from numpy.linalg import inv, det
 
 
 def gaussian_function(mu, sigma_squared, x):
@@ -41,19 +41,19 @@ def gauss_pdf(X, M, S):
     :param S: the Covariance or predictive mean of measurement vector
     :return: Gaussian probability distribution
     """
-    if M.shape()[1] == 1:
-        DX = X - np.tile(M, X.shape()[1])
-        E = 0.5 * sum(DX * (np.dot(inv(S), DX)), axis=0)
-        E = E + 0.5 * M.shape()[0] * np.log(2 * np.pi) + 0.5 * np.log(np.det(S))
+    if M.shape[1] == 1:
+        DX = X - np.tile(M, X.shape[1])
+        E = 0.5 * np.sum(DX * (np.dot(inv(S), DX)), axis=0)
+        E = E + 0.5 * M.shape[0] * np.log(2 * np.pi) + 0.5 * np.log(det(S))
         P = np.exp(-E)
-    elif X.shape()[1] == 1:
-        DX = np.tile(X, M.shape()[1]) - M
-        E = 0.5 * sum(DX * (np.dot(inv(S), DX)), axis=0)
-        E = E + 0.5 * M.shape()[0] * np.log(2 * np.pi) + 0.5 * np.log(np.det(S))
+    elif X.shape[1] == 1:
+        DX = np.tile(X, M.shape[1]) - M
+        E = 0.5 * np.sum(DX * (np.dot(inv(S), DX)), axis=0)
+        E = E + 0.5 * M.shape[0] * np.log(2 * np.pi) + 0.5 * np.log(det(S))
         P = np.exp(-E)
     else:
         DX = X - M
         E = 0.5 * np.dot(DX.T, np.dot(inv(S), DX))
-        E = E + 0.5 * M.shape()[0] * np.log(2 * np.pi) + 0.5 * np.log(np.det(S))
+        E = E + 0.5 * M.shape[0] * np.log(2 * np.pi) + 0.5 * np.log(det(S))
         P = np.exp(-E)
     return (P[0], E[0])

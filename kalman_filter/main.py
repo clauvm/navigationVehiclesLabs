@@ -12,6 +12,9 @@ from kalman_filter.statsUtils import gauss_pdf
 import matplotlib.pyplot as plt
 import numpy as np
 
+number_of_samples = 50
+x = 0.26578
+
 
 def process_equation(previous_state, A, B, G, control_input, process_noise):
     """
@@ -35,10 +38,9 @@ def generate_data():
     :return: measurements
     """
     # We will choose a scalar constant
-    x = 0.26578
+
     mu = 0
     sigma = 0.1
-    number_of_samples = 50
     noise = np.random.normal(mu, sigma, number_of_samples)
     measurements = noise + x
     mean = np.mean(measurements)
@@ -72,7 +74,7 @@ def prediction_step(A, x_hat_previous, B, control_input, Q, P_previous):
     return (x_hat, P_hat)
 
 
-def update_step(x_hat, P_hat, Y, C, R):
+def update_step(x_hat, P_hat, Z, C, R):
     """
     Computes the posterior mean X and covariance P of the system state given a new measurement at time step k
     This is the measurement update phase or the corrector
@@ -86,14 +88,37 @@ def update_step(x_hat, P_hat, Y, C, R):
     IM = np.dot(C, x_hat)  # the Mean of predictive distribution of Y
     IS = R + np.dot(C, np.dot(P_hat, C.T))  # the Covariance or predictive mean of Y
     K = np.dot(P_hat, np.dot(C.T, inv(IS)))  # Kalman Gain matrix
-    X = x_hat + np.dot(K, (Y - IM))
+    X = x_hat + np.dot(K, (Z - IM))
     P = P_hat - np.dot(K, np.dot(IS, K.T))
-    LH = gauss_pdf(Y, IM, IS)  # the Predictive probability (likelihood)
+    LH = gauss_pdf(Z, IM, IS)  # the Predictive probability (likelihood)
     return (X, P, K, IM, IS, LH)
 
 
-def kalman_filter():
-    pass
+def get_ise_error(measured, estimated):
+    return (measured - estimated) ** 2
+
+
+def get_mean_square_error(measured, estimated):
+    return ((measured - estimated) ** 2).mean()
+
+
+def plot_measurements_estimates(Z, filter_estimate):
+    plt.plot(Z, '+', color='r', label='measurements')
+    plt.plot(filter_estimate, 'b', color='blue', label='filter estimate')
+    plt.axhline(x, color='green', linestyle='--', label='true value')
+    plt.ylabel('voltage [V]')
+    plt.xlabel('Iteration')
+    plt.legend()
+    plt.show()
+
+
+def plot_errors(ise_error, mse_error):
+    plt.plot(ise_error, 'b', color='blue', label='ise')
+    plt.plot(mse_error, 'b', color='red', label='mse')
+    plt.ylabel('Spread Error [V^2]')
+    plt.xlabel('Iteration')
+    plt.legend()
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -117,14 +142,24 @@ if __name__ == "__main__":
     """
     We can see that the state does not change from step to step
     therefore A = 1, there is no control input so u = 0. The noise
-    measurement is of the state directly so C = 1
+    measurement is of the state directly so C = 1. There is no Input Control so B and U are 0
     """
+    C = np.ones((1, 1))
+    print("C shape: ", C.shape)
+    A = np.ones((1, 1))
+    print("A shape: ", A.shape)
+    B = np.zeros((1, 1))
+    print("B shape: ", B.shape)
+    U = np.zeros((1, 1))
+    print("U shape: ", U.shape)
 
     """
     Regarding the noise we will set Q = 10^-5 and R = 0.001
     """
-    Q = 0.00001
-    R = 0.001
+    Q = np.array([[0.00001]])
+    print("Q shape: ", Q.shape)
+    R = np.array([[0.001]])
+    print("R shape: ", R.shape)
 
     """
     We can assume that the true value of the random constant follows
@@ -138,10 +173,59 @@ if __name__ == "__main__":
     We will assume that initial error covariance (P in time 0) is 1
     """
 
-    x_hat0 = 0
-    P0 = 1
+    X = np.array([[0]])
+    print("X shape: ", X.shape)
+    P = np.array([[1]])
+    print("P shape: ", P.shape)
 
     """
     In this step, we will generate the data
     """
-    measurements = generate_data()
+    Z = generate_data()
+    print("Z shape: ", Z.shape)
+
+    N_iteration = 50
+    filter_estimate = []
+    ise_error = []
+    mse_error = []
+    for i in range(number_of_samples):
+        (X, P) = prediction_step(A, X, B, U, Q, P)
+        print("Time step: ", i)
+        print("X_HAT: ", X)
+        print("MEASSURED", Z[i])
+        filter_estimate.append(X[0][0])
+        ise_error.append(get_ise_error(Z[i], X[0][0]))
+        mse_error.append(get_mean_square_error(Z[:i + 1], np.array(filter_estimate)))
+        (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
+    plot_measurements_estimates(Z, filter_estimate)
+    plot_errors(ise_error, mse_error)
+    # plt.ylim((0, 1))
+    # plt.xlim((0, 60))
+
+    # Z = X + noise
+
+    # # time step of mobile movement
+    # dt = 0.1
+    # # Initialization of state matrices
+    # X = np.array([[0.0], [0.0], [0.1], [0.1]])
+    # P = np.diag((0.01, 0.01, 0.01, 0.01))
+    # A = np.array([[1, 0, dt, 0], [0, 1, 0, dt], [0, 0, 1, 0], [0, 0, 0, \
+    #                                                            1]])
+    # Q = np.eye(X.shape[0])
+    # B = np.eye(X.shape[0])
+    # U = np.zeros((X.shape[0], 1))
+    # Y = np.array([[X[0, 0] + abs(np.random.randn(1)[0])], [X[1, 0] + \
+    #                                                        abs(np.random.randn(1)[0])]])
+    # H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
+    # R = np.eye(Y.shape[0])
+    # # Number of iterations in Kalman Filter
+    # N_iter = 50
+    # # Applying the Kalman Filter
+    # for i in np.arange(0, N_iter):
+    #     (X, P) = prediction_step(A, X, B, U, Q, P)
+    #     (X, P, K, IM, IS, LH) = update_step(X, P, Y, H, R)
+    #     Y = np.array([[X[0, 0] + abs(0.1 * np.random.randn(1)[0])], [X[1, 0] + \
+    #                                                                  abs(0.1 * np.random.randn(1)[0])]])
+    #     print("Y")
+    #     print(Y)
+    print("Finish iterations")
