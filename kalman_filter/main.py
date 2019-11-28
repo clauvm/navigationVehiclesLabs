@@ -228,8 +228,6 @@ if __name__ == "__main__":
         ise_error.append(get_ise_error(Z[i], X[0][0]))
         # mse_error.append(get_mean_square_error2(Z[i], X[0][0], i + 1))
         mse_error.append(get_mean_square_error(Z[:i + 1], filter_estimate, i + 1))
-
-
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
         covariance.append(P[0][0])
         kalman_gain.append((K[0][0]))
@@ -237,33 +235,4 @@ if __name__ == "__main__":
     plot_errors(ise_error, mse_error)
     plot_covariance(covariance)
     plot_kalman_gain(kalman_gain)
-    # plt.ylim((0, 1))
-    # plt.xlim((0, 60))
-
-    # Z = X + noise
-
-    # # time step of mobile movement
-    # dt = 0.1
-    # # Initialization of state matrices
-    # X = np.array([[0.0], [0.0], [0.1], [0.1]])
-    # P = np.diag((0.01, 0.01, 0.01, 0.01))
-    # A = np.array([[1, 0, dt, 0], [0, 1, 0, dt], [0, 0, 1, 0], [0, 0, 0, \
-    #                                                            1]])
-    # Q = np.eye(X.shape[0])
-    # B = np.eye(X.shape[0])
-    # U = np.zeros((X.shape[0], 1))
-    # Y = np.array([[X[0, 0] + abs(np.random.randn(1)[0])], [X[1, 0] + \
-    #                                                        abs(np.random.randn(1)[0])]])
-    # H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
-    # R = np.eye(Y.shape[0])
-    # # Number of iterations in Kalman Filter
-    # N_iter = 50
-    # # Applying the Kalman Filter
-    # for i in np.arange(0, N_iter):
-    #     (X, P) = prediction_step(A, X, B, U, Q, P)
-    #     (X, P, K, IM, IS, LH) = update_step(X, P, Y, H, R)
-    #     Y = np.array([[X[0, 0] + abs(0.1 * np.random.randn(1)[0])], [X[1, 0] + \
-    #                                                                  abs(0.1 * np.random.randn(1)[0])]])
-    #     print("Y")
-    #     print(Y)
     print("Finish iterations")
