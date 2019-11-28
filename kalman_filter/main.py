@@ -98,8 +98,19 @@ def get_ise_error(measured, estimated):
     return (measured - estimated) ** 2
 
 
-def get_mean_square_error(measured, estimated):
-    return ((measured - estimated) ** 2).mean()
+def get_mean_square_error(measured, estimated, n):
+    # return ((measured - estimated) ** 2).mean()
+    suma = 0
+    for i in range(n):
+        suma += ((measured[i] - estimated[i]) ** 2)
+    return suma / n
+
+
+def get_mean_square_error2(measured, estimated, n):
+    suma = 0
+    for i in range(n):
+        suma += ((measured - estimated) ** 2)
+    return suma / n
 
 
 def plot_measurements_estimates(Z, filter_estimate):
@@ -117,6 +128,24 @@ def plot_errors(ise_error, mse_error):
     plt.plot(mse_error, 'b', color='red', label='mse')
     plt.ylabel('Spread Error [V^2]')
     plt.xlabel('Iteration')
+    plt.legend()
+    plt.show()
+
+
+def plot_covariance(covariance):
+    plt.plot(covariance, 'b', color='blue')
+    plt.ylabel('Covariance')
+    plt.xlabel('Iteration')
+    plt.title("Estimate error covariance (P)")
+    plt.legend()
+    plt.show()
+
+
+def plot_kalman_gain(kalman_gain):
+    plt.plot(kalman_gain, 'b', color='blue')
+    plt.ylabel('gain')
+    plt.xlabel('Iteration')
+    plt.title("Kalman Gain (K)")
     plt.legend()
     plt.show()
 
@@ -188,6 +217,8 @@ if __name__ == "__main__":
     filter_estimate = []
     ise_error = []
     mse_error = []
+    covariance = []
+    kalman_gain = [0]
     for i in range(number_of_samples):
         (X, P) = prediction_step(A, X, B, U, Q, P)
         print("Time step: ", i)
@@ -195,10 +226,17 @@ if __name__ == "__main__":
         print("MEASSURED", Z[i])
         filter_estimate.append(X[0][0])
         ise_error.append(get_ise_error(Z[i], X[0][0]))
-        mse_error.append(get_mean_square_error(Z[:i + 1], np.array(filter_estimate)))
+        # mse_error.append(get_mean_square_error2(Z[i], X[0][0], i + 1))
+        mse_error.append(get_mean_square_error(Z[:i + 1], filter_estimate, i + 1))
+
+
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
+        covariance.append(P[0][0])
+        kalman_gain.append((K[0][0]))
     plot_measurements_estimates(Z, filter_estimate)
     plot_errors(ise_error, mse_error)
+    plot_covariance(covariance)
+    plot_kalman_gain(kalman_gain)
     # plt.ylim((0, 1))
     # plt.xlim((0, 60))
 
