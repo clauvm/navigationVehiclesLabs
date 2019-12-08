@@ -12,7 +12,7 @@ from numpy.linalg import inv
 import matplotlib.pyplot as plt
 import numpy as np
 
-from statsUtils import gauss_pdf
+from kalman_filter.statsUtils import gauss_pdf
 
 number_of_samples = 50
 x = 0.26578
@@ -43,8 +43,8 @@ def generate_data():
 
     mu = 0
     sigma = 0.1
-    noise = np.random.normal(mu, sigma, number_of_samples)
-    measurements = noise + x
+    error = np.random.normal(mu, sigma, number_of_samples)
+    measurements = error + x
     mean = np.mean(measurements)
     print("measurements")
     print(measurements)
