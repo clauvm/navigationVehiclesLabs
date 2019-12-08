@@ -8,9 +8,11 @@ Code was adapted to follow the notation of the course assignment
 """
 from numpy.linalg import inv
 
-from kalman_filter.statsUtils import gauss_pdf
+
 import matplotlib.pyplot as plt
 import numpy as np
+
+from statsUtils import gauss_pdf
 
 number_of_samples = 50
 x = 0.26578
