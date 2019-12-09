@@ -141,6 +141,20 @@ def plot_ness(ness, q):
     plt.show()
 
 
+def plot_nis(nis, q):
+    a = len(list(filter(lambda x: x > 6, nis)))
+    print("a")
+    print(a)
+    plt.plot(nis, 'b', color='blue')
+    plt.ylabel('NIS')
+    plt.ylim((0, 10))
+    plt.axhline(y=6)
+    plt.xlabel('Time')
+    plt.title("NIS ERROR Q={0}".format(q))
+    plt.legend()
+    plt.show()
+
+
 def plot_position_velocity(position_true, velocity_true, position_estimate, velocity_estimate, Q):
     plt.plot(position_true, velocity_true, 'b', color='blue')
     plt.plot(position_estimate, velocity_estimate, '--', color='red')
@@ -204,6 +218,12 @@ def NESS(x, x_hat, p):
     return np.linalg.multi_dot([x_tilde.T, np.linalg.inv(p), x_tilde])
 
 
+def NIS(C, P, Z, x_hat, H, R):
+    z_tilde = Z - np.matmul(C, x_hat)
+    s = np.linalg.multi_dot([C, P, C.T]) + np.linalg.multi_dot([H, R, H.T])
+    return np.linalg.multi_dot([z_tilde.T, np.linalg.inv(s), z_tilde])
+
+
 def single_simulation_constant_velocity_model(q):
     T = 1.0
     A = np.array([[1, T], [0, 1]])
@@ -215,6 +235,7 @@ def single_simulation_constant_velocity_model(q):
     print("C shape: ", C.shape)
     G = np.array([[T ** 2 / 2], [T]])
     print("G shape: ", G.shape)
+    H = np.array([[1]])
     R = np.array([[1]])
     Q = np.array([[q]])
     Q_try = np.array([[T ** 3 / 3, T ** 2 / 2],
@@ -229,8 +250,10 @@ def single_simulation_constant_velocity_model(q):
     filter_estimate = []
     kalman_gain = []
     ness_arr = []
+    nis_arr = []
     for i in range(number_of_samples):
         (X, P) = prediction_step(A, X, B, U, Q_try, P)
+        nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
         position_estimate.append(X[0][0])
         velocity_estimate.append(X[1][0])
         x_true_i = np.array([[X_true[0][i]], [X_true[1][i]]])
@@ -253,6 +276,7 @@ def single_simulation_constant_velocity_model(q):
     # plot_position_velocity(position_true, velocity_true, np.array(position_estimate[0:-1]),
     #                        np.array(velocity_estimate[0:-1]), Q[0][0])
     plot_ness(ness_arr, q)
+    plot_nis(nis_arr, q)
 
 
 if __name__ == "__main__":
