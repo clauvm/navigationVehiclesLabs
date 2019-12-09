@@ -8,10 +8,10 @@ Code was adapted to follow the notation of the course assignment
 """
 from numpy.linalg import inv
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 
+from assignment2.files.gen_data13_fun import get_generated_data
 from statsUtils import gauss_pdf
 
 number_of_samples = 50
@@ -32,33 +32,6 @@ def process_equation(previous_state, A, B, G, control_input, process_noise):
     return A * previous_state + B * control_input + G * process_noise
 
 
-def generate_data():
-    """
-    Generates data for the measurements, 50 records subject to a noise that follows a normal
-    probability distribution mu = 0 and standard deviation of 0.1, this function also plots
-    the data
-    :return: measurements
-    """
-    # We will choose a scalar constant
-
-    mu = 0
-    sigma = 0.1
-    noise = np.random.normal(mu, sigma, number_of_samples)
-    measurements = noise + x
-    mean = np.mean(measurements)
-    print("measurements")
-    print(measurements)
-    print("np mean")
-    print(mean)
-    plt.plot(measurements, '+', color='r', label='measurements')
-    plt.axhline(mean, color='black', linestyle='--', label='mean value of measurements')
-    plt.ylabel('voltage [V]')
-    plt.xlabel('Measurement')
-    plt.legend()
-    plt.show()
-    return measurements
-
-
 def prediction_step(A, x_hat_previous, B, control_input, Q, P_previous):
     """
     Computes prediction of mean (X) and covariance(P) of the system at a specific timestep
@@ -71,7 +44,7 @@ def prediction_step(A, x_hat_previous, B, control_input, Q, P_previous):
     :param P_previous: The state covariance of previous step
     :return: predicted mean(x_hat) and predicted covariance (P_hat)
     """
-    x_hat = np.dot(A, x_hat_previous) + np.dot(B, control_input)
+    x_hat = np.dot(A, x_hat_previous)
     P_hat = np.dot(A, np.dot(P_previous, A.T)) + Q
     return (x_hat, P_hat)
 
@@ -152,7 +125,35 @@ def plot_kalman_gain(kalman_gain):
     plt.show()
 
 
+def single_simulation():
+    T = 1.0
+    A = np.array([[1, T], [0, 1]])
+    print("A shape: ", A.shape)
+    B = np.array([[0], [0]])
+    U = np.array([[0], [0]])
+    print("B shape: ", B.shape)
+    C = np.array([[1, 0]])
+    print("C shape: ", C.shape)
+    G = np.array([[T ** 2 / 2], [T]])
+    print("G shape: ", G.shape)
+    H = np.array([[1]])
+    R = np.array([[1]])
+    Q = np.array([[1]])
+    Z, X_true = get_generated_data(Q[0][0], R[0][0])
+    X = np.array([[Z[0]], [(Z[1] - Z[0]) / T]])
+    P = np.linalg.inv(np.array([[R[0][0], R[0][0] / T], [R[0][0] / T, (2 * R[0][0]) / (T ** 2)]]))
+    N_iteration = 100
+    filter_estimate = []
+    kalman_gain = [0]
+    for i in range(number_of_samples):
+        (X, P) = prediction_step(A, X, B, U, Q, P)
+        (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
+
+    print("Funciona")
+
+
 if __name__ == "__main__":
+    single_simulation()
     """
     We want to estimate a scalar x, we can take measurements of that constant
     but these measurements are corrupted by a noise of 0.01
@@ -175,6 +176,7 @@ if __name__ == "__main__":
     therefore A = 1, there is no control input so u = 0. The noise
     measurement is of the state directly so C = 1. There is no Input Control so B and U are 0
     """
+    T = 1
     C = np.ones((1, 1))
     print("C shape: ", C.shape)
     A = np.ones((1, 1))

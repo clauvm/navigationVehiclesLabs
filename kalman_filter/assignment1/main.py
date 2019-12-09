@@ -12,7 +12,7 @@ from numpy.linalg import inv
 import matplotlib.pyplot as plt
 import numpy as np
 
-from kalman_filter.statsUtils import gauss_pdf
+from statsUtils import gauss_pdf
 
 number_of_samples = 50
 x = 0.26578
