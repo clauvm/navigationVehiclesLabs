@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_generated_data(Q, R):
+def get_generated_data_eq_13(Q, R):
     var_a = float(Q)
     N = 100  # data size
     T = 1.0  # [s] Sampling time interval
