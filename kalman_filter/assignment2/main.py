@@ -72,7 +72,7 @@ def update_step(x_hat, P_hat, Z, C, R):
 #     plt.show()
 
 
-def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
+def single_simulation_constant_velocity_model(q, matched=True, piecewise=False, plot=False, model=''):
     """
     Constant (or piecewise) velocity white noise accelleration eq 13 and 14
     :param piecewise: whether data should be generated with equations 13 or 14
@@ -80,14 +80,10 @@ def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
     """
     T = 1.0
     A = np.array([[1, T], [0, 1]])
-    print("A shape: ", A.shape)
     B = np.array([[0], [0]])
     U = np.array([[0], [0]])
-    print("B shape: ", B.shape)
     C = np.array([[1, 0]])
-    print("C shape: ", C.shape)
     G = np.array([[T ** 2 / 2], [T]])
-    print("G shape: ", G.shape)
     H = np.array([[1]])
     R = np.array([[1]])
     Q = np.array([[q]])
@@ -139,7 +135,7 @@ def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
         kalman_gain.append(K)
 
-    print("Kalman gain Q{0}".format(Q[0][0]))
+    # print("Kalman gain Q{0}".format(Q[0][0]))
     # print(kalman_gain)
     # Gains
     position_gain = np.array(kalman_gain)[:, 0:1, :].reshape(number_of_samples)
@@ -148,16 +144,16 @@ def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
     position_true = X_true[0, :]
     velocity_true = X_true[1, :]
     if plot:
-        plot_kalman_gain(position_gain, "position")
-        plot_kalman_gain(velocity_gain, "velocity")
-        plot_position_velocity(position_true, velocity_true, np.array(position_estimate[0:-1]),
-                               np.array(velocity_estimate[0:-1]), Q[0][0])
-        plot_ness(ness_arr, q)
-        plot_nis(nis_arr, q)
+        # plot_kalman_gain(position_gain, "position")
+        # plot_kalman_gain(velocity_gain, "velocity")
+        # plot_position_velocity(position_true, velocity_true, np.array(position_estimate[0:-1]),
+        #                        np.array(velocity_estimate[0:-1]), Q[0][0])
+        plot_ness(ness_arr, q, matched=matched, model=model)
+        plot_nis(nis_arr, q, matched=matched, model=model)
     return ness_arr, nis_arr, sac_arr, ta_nis, ta_ac
 
 
-def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False):
+def single_simulation_constant_acceleration_model(q, matched=True, piecewise=False, plot=False, model=''):
     """
     Constant (or piecewise) acceleration model eq 15 and 16
     :param piecewise: whether data should be generated with equations 15 or 16
@@ -167,12 +163,9 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
     A = np.array([[1, T, T ** 2 / 2],
                   [0, 1, T],
                   [0, 0, 1]], dtype=float)
-    print("A shape: ", A.shape)
     B = np.array([[0], [0], [0]])
     U = np.array([[0], [0]])
-    print("B shape: ", B.shape)
     C = np.array([[1, 0, 0]])
-    print("C shape: ", C.shape)
 
     H = np.array([[1]])
     R = np.array([[1]])
@@ -231,7 +224,6 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
         kalman_gain.append(K)
 
-    print("Kalman gain Q{0}".format(Q[0][0]))
     # print(kalman_gain)
     # Gains
     position_gain = np.array(kalman_gain)[:, 0:1, :].reshape(number_of_samples)
@@ -243,15 +235,15 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
     velocity_true = X_true[1, :]
     acceleration_true = X_true[2, :]
     if plot:
-        plot_kalman_gain(position_gain, "position")
-        plot_kalman_gain(velocity_gain, "velocity")
-        plot_kalman_gain(acceleration_gain, "acceleration")
-        plot_position_velocity_acceleration(position_true, velocity_true, acceleration_true,
-                                            np.array(position_estimate[0:-1]),
-                                            np.array(velocity_estimate[0:-1]), np.array(velocity_estimate[0:-1]),
-                                            Q[0][0])
-        plot_ness(ness_arr, q)
-        plot_nis(nis_arr, q)
+        # plot_kalman_gain(position_gain, "position")
+        # plot_kalman_gain(velocity_gain, "velocity")
+        # plot_kalman_gain(acceleration_gain, "acceleration")
+        # plot_position_velocity_acceleration(position_true, velocity_true, acceleration_true,
+        #                                     np.array(position_estimate[0:-1]),
+        #                                     np.array(velocity_estimate[0:-1]), np.array(velocity_estimate[0:-1]),
+        #                                     Q[0][0])
+        plot_ness(ness_arr, q, matched=matched, model='')
+        plot_nis(nis_arr, q, matched=matched, model='')
     return ness_arr, nis_arr, sac_arr, ta_nis, ta_ac
 
 
@@ -267,16 +259,18 @@ def get_sac(sac_matrix):
     return result
 
 
-def monte_carlo_simulation_constant_velocity_model(q, isVeloConstant=True, number_of_runs=50, piecewise=False,
+def monte_carlo_simulation_constant_velocity_model(q, isVeloConstant=True, number_of_runs=50, matched=True,
+                                                   piecewise=False,
                                                    model_name=''):
     ness_matrix = []
     nis_matrix = []
     sac_matrix = []
 
     for i in range(number_of_runs):
-        ness_arr_constant_velo, nis_arr_constant_velo, sac_constant_velo = single_simulation_constant_velocity_model(q,
-                                                                                                                     piecewise=piecewise) if isVeloConstant else single_simulation_constant_acceleration_model(
-            q, piecewise=piecewise)
+        ness_arr_constant_velo, nis_arr_constant_velo, sac_constant_velo, ta_nis, ta_ac = single_simulation_constant_velocity_model(
+            q, matched=matched,
+            piecewise=piecewise) if isVeloConstant else single_simulation_constant_acceleration_model(
+            q, matched=matched, piecewise=piecewise)
         ness_matrix.append(ness_arr_constant_velo)
         nis_matrix.append(nis_arr_constant_velo)
         sac_matrix.append(sac_constant_velo)
@@ -286,28 +280,29 @@ def monte_carlo_simulation_constant_velocity_model(q, isVeloConstant=True, numbe
     sac_result = np.array(get_sac(sac_np))
 
     if isVeloConstant:
-        plot_error(mean_ness, q, "Time", "NEES", "{1} NEES ERROR Q={0}".format(q, model_name), 0, 4, 1.5, 2.6)
-        plot_error(mean_nis, q, "Time", "NIS", "{1} NIS ERROR Q={0}".format(q, model_name), 0, 2, 0.65, 1.43)
-        plot_error(sac_result, q, "Time", "SAC", "{1} SAC ERROR Q={0}".format(q, model_name), -0.5, 1.5, -0.277, 0.277)
+        plot_error(mean_ness, q, "Time", "NEES", "{1} NEES Q={0}".format(q, model_name), 0, 4, 1.5, 2.6)
+        plot_error(mean_nis, q, "Time", "NIS", "{1} NIS Q={0}".format(q, model_name), 0, 2, 0.65, 1.43)
+        plot_error(sac_result, q, "Time", "SAC", "{1} SAC Q={0}".format(q, model_name), -0.5, 1.5, -0.277, 0.277)
     else:
-        plot_error(mean_ness, q, "Time", "NEES", "{1} NEES ERROR Q={0}".format(q, model_name), 2, 4, 2.36, 3.7)
-        plot_error(mean_nis, q, "Time", "NIS", "{1} NIS ERROR Q={0}".format(q, model_name), 0, 2, 0.65, 1.43)
-        plot_error(sac_result, q, "Time", "SAC", "{1} SAC ERROR Q={0}".format(q, model_name), -0.5, 1.5, -0.277, 0.277)
+        plot_error(mean_ness, q, "Time", "NEES", "{1} NEES Q={0}".format(q, model_name), 2, 4, 2.36, 3.7)
+        plot_error(mean_nis, q, "Time", "NIS", "{1} NIS Q={0}".format(q, model_name), 0, 2, 0.65, 1.43)
+        plot_error(sac_result, q, "Time", "SAC", "{1} SAC Q={0}".format(q, model_name), -0.5, 1.5, -0.277, 0.277)
 
     # plot_ness(mean_ness, q, 0, 4, 1.5, 2.6)
     # plot_nis(mean_nis, q, 0, 2, 0.65, 1.43)
     return mean_ness, mean_nis
 
 
-def real_time_test_simulation_constant_velocity_model(q, isVeloConstant=True, number_of_runs=1, piecewise=False,
+def real_time_test_simulation_constant_velocity_model(q, isVeloConstant=True, number_of_runs=1, matched=True,
+                                                      piecewise=False,
                                                       model_name=''):
     ta_nis_matrix = []
 
     for i in range(number_of_runs):
         ness_arr_constant_velo, nis_arr_constant_velo, sac_constant_velo, ta_nis, ta_ac = single_simulation_constant_velocity_model(
-            q,
+            q, matched=matched,
             piecewise=piecewise) if isVeloConstant else single_simulation_constant_acceleration_model(
-            q, piecewise=piecewise)
+            q, matched=matched, piecewise=piecewise)
 
         ta_nis_matrix.append(ta_nis)
 
@@ -317,51 +312,87 @@ def real_time_test_simulation_constant_velocity_model(q, isVeloConstant=True, nu
     print("ta_ac {0}: {1}".format(model_name, ta_ac[len(ta_ac) - 1]))
 
     if isVeloConstant:
-        plot_error(np_tanis, q, "Time", "TA_NIS", "{1} TANIS ERROR Q={0}".format(q, model_name), 0, 2, 0.74, 1.3,
+        plot_error(np_tanis, q, "Time", "TA_NIS", "{1} TANIS Q={0}".format(q, model_name), 0, 2, 0.74, 1.3,
                    True)
-        plot_error(np_tac, q, "Time", "TA_AC", "{1} TA_AC ERROR Q={0}".format(q, model_name), -1, 1, -0.196, 0.196,
+        plot_error(np_tac, q, "Time", "TA_AC", "{1} TA_AC Q={0}".format(q, model_name), -1, 1, -0.196, 0.196,
                    True)
     else:
-        plot_error(np_tanis, q, "Time", "TA_NIS", "{1} TA_NIS ERROR Q={0}".format(q, model_name), 0, 5, 1.6, 2.16,
+        plot_error(np_tanis, q, "Time", "TA_NIS", "{1} TA_NIS Q={0}".format(q, model_name), 0, 5, 1.6, 2.16,
                    True)
-        plot_error(np_tac, q, "Time", "TA_AC", "{1} TA_AC ERROR Q={0}".format(q, model_name), -1, 1, -0.196, 0.196, True)
+        plot_error(np_tac, q, "Time", "TA_AC", "{1} TA_AC Q={0}".format(q, model_name), -1, 1, -0.196, 0.196,
+                   True)
     return np_tanis
 
 
 if __name__ == "__main__":
     number_samples_q = 1
     indices = random.sample(range(1, 10), number_samples_q)
-    for q in indices:
-        # Single Simulations
-        # single_simulation_constant_velocity_model(q, piecewise=False)
-        # single_simulation_constant_velocity_model(q, piecewise=True)
-        # single_simulation_constant_acceleration_model(q, piecewise=False)
-        # single_simulation_constant_acceleration_model(q, piecewise=True)
 
-        # # Multiple Simulations (Monte Carlo)
-        # # Constant velocity piecewise false montecarlo
-        # monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, False,
-        #                                                'Constant Velocity pw false')
-        # # Constant velocity piecewise true montecarlo
-        # monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, True,
-        #                                                'Constant Velocity pw true')
-        #
-        # # Constant acceleration piecewise false montecarlo
-        # monte_carlo_simulation_constant_velocity_model(1, False, number_of_runs_monte_carlo, False,
-        #                                                'Constant Acceleration pw false')
-        # monte_carlo_simulation_constant_velocity_model(1, False, number_of_runs_monte_carlo, True,
-        #                                                'Constant Acceleration pw true')
+    matched_v = [True]
+    for matched in matched_v:
+        print("MATCHED MODEL = {0} ... ".format(matched))
+        for q in indices:
+            print("VALUE OF q={0}".format(q))
+            # Single Simulations
+            print("Computing Single Simulation matched model...")
+            print("--------------------")
+            print("Computing Single Simulation constant velocity eq 13...")
 
-        # Real time test
-        # Real time test constant velocity piece wise False
-        real_time_test_simulation_constant_velocity_model(1, True, 1, False,
-                                                          'RT Constant Velocity pw false')
-        # Real time test constant velocity piece wise True
-        real_time_test_simulation_constant_velocity_model(1, True, 1, True,
-                                                          'RT Constant Velocity pw true')
-        # Real time test constant acceleration piece wise False
-        real_time_test_simulation_constant_velocity_model(1, False, 1, False,
-                                                          'RT Constant Acceleration pw false')
-        # Real time test constant acceleration piece wise True
-        real_time_test_simulation_constant_velocity_model(1, False, 1, True,
-                                                          'RT Constant Acceleration pw true')
+            single_simulation_constant_velocity_model(q, matched=matched,
+                                                      piecewise=False, model='Single Simulation Constant velocity',
+                                                      plot=True)
+            print("Computing Single Simulation constant velocity piecewise eq 14...")
+            single_simulation_constant_velocity_model(q, matched=matched, piecewise=True,
+                                                      model='Single Simulation Constant velocity piecewise', plot=True)
+            print("Computing Single Simulation constant acceleration eq 15...")
+            single_simulation_constant_acceleration_model(q, matched=matched, piecewise=False,
+                                                          model='Single Simulation Constant acceleration', plot=True)
+            print("Computing Single Simulation constant acceleration piecewise eq 16...")
+            single_simulation_constant_acceleration_model(q, matched=matched, piecewise=True,
+                                                          model='Single Simulation Constant acceleration piecewise',
+                                                          plot=True)
+            print("--------------------")
+
+            print("Computing Multiple Simulation (Monte Carlo) matched model...")
+            print("--------------------")
+            # Multiple Simulations (Monte Carlo)
+            # Constant velocity piecewise false montecarlo
+            print("Computing Multiple Simulation constant velocity eq 13...")
+            monte_carlo_simulation_constant_velocity_model(q, True, number_of_runs_monte_carlo, matched, False,
+                                                           'Matched={0} Monte Carlo Constant Velocity'.format(matched))
+            print("Computing Multiple Simulation constant velocity piecewise eq 14...")
+            # Constant velocity piecewise true montecarlo
+            monte_carlo_simulation_constant_velocity_model(q, True, number_of_runs_monte_carlo, matched, True,
+                                                           'Matched={0} Monte Carlo Constant Velocity piecewise'.format(
+                                                               matched))
+
+            # Constant acceleration piecewise false montecarlo
+            print("Computing Multiple Simulation constant acceleration eq 15...")
+            monte_carlo_simulation_constant_velocity_model(q, False, number_of_runs_monte_carlo, matched, False,
+                                                           'Matched={0} Monte Carlo Constant Acceleration'.format(
+                                                               matched))
+            print("Computing Multiple Simulation constant acceleration piecewise eq 16...")
+            monte_carlo_simulation_constant_velocity_model(q, False, number_of_runs_monte_carlo, matched, True,
+                                                           'Matched={0} Monte Carlo Constant Acceleration piecewise'.format(
+                                                               matched))
+
+            # Real time test
+            # Real time test constant velocity piece wise False
+            print("Computing Real Time Test constant velocity...")
+            real_time_test_simulation_constant_velocity_model(q, True, 1, matched, False,
+                                                              'Matched={0} RealTime Constant Velocity'.format(matched))
+            # Real time test constant velocity piece wise True
+            print("Computing Real Time Test piecewise constant velocity...")
+            real_time_test_simulation_constant_velocity_model(q, True, 1, matched, True,
+                                                              'Matched={0} RealTime Constant Velocity piecewise'.format(
+                                                                  matched))
+            # Real time test constant acceleration piece wise False
+            print("Computing Real Time Test constant acceleration...")
+            real_time_test_simulation_constant_velocity_model(q, False, 1, matched, False,
+                                                              'Matched={0} RealTime Constant Acceleration'.format(
+                                                                  matched))
+            # Real time test constant acceleration piece wise True
+            print("Computing Real Time Test constant acceleration piecewise...")
+            real_time_test_simulation_constant_velocity_model(q, False, 1, matched, True,
+                                                              'Matched={0} RealTime Constant Acceleration'.format(
+                                                                  matched))

@@ -49,10 +49,7 @@ def plot_kalman_gain(kalman_gain, title=""):
     plt.show()
 
 
-def plot_ness(ness, q, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
-    a = len(list(filter(lambda x: x > 6, ness)))
-    print("greater than acceptable interval")
-    print(a)
+def plot_ness(ness, q, matched, model, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
     plt.plot(ness, 'b', color='blue')
     plt.ylabel('NEES')
     plt.ylim((y_bottom_lim, y_top_lim))
@@ -61,15 +58,12 @@ def plot_ness(ness, q, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval
     if interval_top:
         plt.axhline(y=interval_top)
     plt.xlabel('Time')
-    plt.title("NEES ERROR Q={0}".format(q))
+    plt.title("Matched={1} {2} NEES Q={0}".format(q, matched, model))
     plt.legend()
     plt.show()
 
 
-def plot_nis(nis, q, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
-    a = len(list(filter(lambda x: x > 6, nis)))
-    print("a")
-    print(a)
+def plot_nis(nis, q, matched, model, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
     plt.plot(nis, 'b', color='blue')
     plt.ylabel('NIS')
     plt.ylim((y_bottom_lim, y_top_lim))
@@ -78,7 +72,7 @@ def plot_nis(nis, q, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_t
     if interval_top:
         plt.axhline(y=interval_top)
     plt.xlabel('Time')
-    plt.title("NIS ERROR Q={0}".format(q))
+    plt.title("Matched={1} {2} NIS ERROR Q={0}".format(q, matched, model))
     plt.legend()
     plt.show()
 
@@ -99,6 +93,7 @@ def plot_error(error, q, x_label, y_label, title, y_bottom_lim=0, y_top_lim=10, 
     plt.xlabel(x_label)
     plt.title(title)
     plt.legend()
+    plt.savefig(title + ".png")
     plt.show()
 
 
