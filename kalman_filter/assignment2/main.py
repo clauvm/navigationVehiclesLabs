@@ -89,8 +89,12 @@ def single_simulation_constant_velocity_model(q, matched=True, piecewise=False, 
     Q = np.array([[q]])
     Q_try = np.array([[T ** 3 / 3, T ** 2 / 2],
                       [T ** 2 / 2, T]], dtype=float) * q
-    Z, X_true = get_generated_data_eq_13(Q[0][0], R[0][0]) if not piecewise else get_generated_data_eq_14(Q[0][0],
-                                                                                                          R[0][0])
+    Q_try_2 = np.array([[T ** 3 / 3, T ** 2 / 2],
+                        [T ** 2 / 2, T]], dtype=float) * 9
+    Z, X_true = get_generated_data_eq_13(Q[0][0] if matched else 9,
+                                         R[0][0]) if not piecewise else get_generated_data_eq_14(
+        Q[0][0] if matched else 9,
+        R[0][0])
 
     X = np.array([[Z[0]], [(Z[1] - Z[0]) / T]])
     position_estimate = [X[0][0]]
@@ -109,7 +113,7 @@ def single_simulation_constant_velocity_model(q, matched=True, piecewise=False, 
     P_hat = []
     first_time = True
     for i in range(number_of_samples):
-        (X, P) = prediction_step(A, X, B, U, Q_try if matched else Q[0][0], P)
+        (X, P) = prediction_step(A, X, B, U, Q_try if matched else Q_try, P)
         x_hat.append(X)
         P_hat.append(P)
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
@@ -173,8 +177,13 @@ def single_simulation_constant_acceleration_model(q, matched=True, piecewise=Fal
     Q_try = np.array([[(T ** 5) / 20, (T ** 4) / 8, (T ** 3) / 6],
                       [(T ** 4) / 8, (T ** 3) / 3, (T ** 2) / 2],
                       [(T ** 3) / 6, (T ** 2) / 2, T]], dtype=float) * q
-    Z, X_true = get_generated_data_eq_15(Q[0][0], R[0][0]) if not piecewise else get_generated_data_eq_16(Q[0][0],
-                                                                                                          R[0][0])
+    Q_try_2 = np.array([[(T ** 5) / 20, (T ** 4) / 8, (T ** 3) / 6],
+                        [(T ** 4) / 8, (T ** 3) / 3, (T ** 2) / 2],
+                        [(T ** 3) / 6, (T ** 2) / 2, T]], dtype=float) * 9
+    Z, X_true = get_generated_data_eq_15(Q[0][0] if matched else 9,
+                                         R[0][0]) if not piecewise else get_generated_data_eq_16(
+        Q[0][0] if matched else 9,
+        R[0][0])
 
     X = np.array([[Z[0]], [(Z[1] - Z[0]) / T], [0]])
     position_estimate = [X[0][0]]
@@ -199,7 +208,7 @@ def single_simulation_constant_acceleration_model(q, matched=True, piecewise=Fal
     first_time = True
 
     for i in range(number_of_samples):
-        (X, P) = prediction_step(A, X, B, U, Q_try if matched else Q[0][0], P)
+        (X, P) = prediction_step(A, X, B, U, Q_try, P)
         x_hat.append(X)
         P_hat.append(P)
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
