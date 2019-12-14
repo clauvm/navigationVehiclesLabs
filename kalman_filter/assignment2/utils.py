@@ -50,6 +50,7 @@ def plot_kalman_gain(kalman_gain, title=""):
 
 
 def plot_ness(ness, q, matched, model, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
+    title = "Matched={1} {2} NEES Q={0}".format(q, matched, model)
     plt.plot(ness, 'b', color='blue')
     plt.ylabel('NEES')
     plt.ylim((y_bottom_lim, y_top_lim))
@@ -58,12 +59,14 @@ def plot_ness(ness, q, matched, model, y_bottom_lim=0, y_top_lim=10, interval_bo
     if interval_top:
         plt.axhline(y=interval_top)
     plt.xlabel('Time')
-    plt.title("Matched={1} {2} NEES Q={0}".format(q, matched, model))
+    plt.title(title)
     plt.legend()
+    plt.savefig(title + ".png")
     plt.show()
 
 
 def plot_nis(nis, q, matched, model, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
+    title = "Matched={1} {2} NIS ERROR Q={0}".format(q, matched, model)
     plt.plot(nis, 'b', color='blue')
     plt.ylabel('NIS')
     plt.ylim((y_bottom_lim, y_top_lim))
@@ -72,8 +75,9 @@ def plot_nis(nis, q, matched, model, y_bottom_lim=0, y_top_lim=10, interval_bott
     if interval_top:
         plt.axhline(y=interval_top)
     plt.xlabel('Time')
-    plt.title("Matched={1} {2} NIS ERROR Q={0}".format(q, matched, model))
+    plt.title(title)
     plt.legend()
+    plt.savefig(title + ".png")
     plt.show()
 
 
