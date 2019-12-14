@@ -109,7 +109,7 @@ def single_simulation_constant_velocity_model(q, matched=True, piecewise=False, 
     P_hat = []
     first_time = True
     for i in range(number_of_samples):
-        (X, P) = prediction_step(A, X, B, U, Q_try, P)
+        (X, P) = prediction_step(A, X, B, U, Q_try if matched else Q[0][0], P)
         x_hat.append(X)
         P_hat.append(P)
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
@@ -199,7 +199,7 @@ def single_simulation_constant_acceleration_model(q, matched=True, piecewise=Fal
     first_time = True
 
     for i in range(number_of_samples):
-        (X, P) = prediction_step(A, X, B, U, Q_try, P)
+        (X, P) = prediction_step(A, X, B, U, Q_try if matched else Q[0][0], P)
         x_hat.append(X)
         P_hat.append(P)
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
@@ -242,8 +242,8 @@ def single_simulation_constant_acceleration_model(q, matched=True, piecewise=Fal
         #                                     np.array(position_estimate[0:-1]),
         #                                     np.array(velocity_estimate[0:-1]), np.array(velocity_estimate[0:-1]),
         #                                     Q[0][0])
-        plot_ness(ness_arr, q, matched=matched, model='')
-        plot_nis(nis_arr, q, matched=matched, model='')
+        plot_ness(ness_arr, q, matched=matched, model=model)
+        plot_nis(nis_arr, q, matched=matched, model=model)
     return ness_arr, nis_arr, sac_arr, ta_nis, ta_ac
 
 
@@ -325,13 +325,14 @@ def real_time_test_simulation_constant_velocity_model(q, isVeloConstant=True, nu
 
 
 if __name__ == "__main__":
-    number_samples_q = 1
-    indices = random.sample(range(1, 10), number_samples_q)
+    number_samples_q = 3
+    indices = random.sample(range(2, 10), number_samples_q)
+    indices_f = np.concatenate((np.array([1]), np.array(indices)), axis=None)
 
-    matched_v = [True]
+    matched_v = [True, False]
     for matched in matched_v:
         print("MATCHED MODEL = {0} ... ".format(matched))
-        for q in indices:
+        for q in indices_f:
             print("VALUE OF q={0}".format(q))
             # Single Simulations
             print("Computing Single Simulation matched model...")
