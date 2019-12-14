@@ -71,7 +71,7 @@ def update_step(x_hat, P_hat, Z, C, R):
 #     plt.show()
 
 
-def single_simulation_constant_velocity_model(q, piecewise=False):
+def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
     """
     Constant (or piecewise) velocity white noise accelleration eq 13 and 14
     :param piecewise: whether data should be generated with equations 13 or 14
@@ -118,18 +118,20 @@ def single_simulation_constant_velocity_model(q, piecewise=False):
     # Gains
     position_gain = np.array(kalman_gain)[:, 0:1, :].reshape(number_of_samples)
     velocity_gain = np.array(kalman_gain)[:, 1:2, :].reshape(number_of_samples)
-    plot_kalman_gain(position_gain, "position")
-    plot_kalman_gain(velocity_gain, "velocity")
     # X values
     position_true = X_true[0, :]
     velocity_true = X_true[1, :]
-    plot_position_velocity(position_true, velocity_true, np.array(position_estimate[0:-1]),
-                           np.array(velocity_estimate[0:-1]), Q[0][0])
-    plot_ness(ness_arr, q)
-    plot_nis(nis_arr, q)
+    if plot:
+        plot_kalman_gain(position_gain, "position")
+        plot_kalman_gain(velocity_gain, "velocity")
+        plot_position_velocity(position_true, velocity_true, np.array(position_estimate[0:-1]),
+                               np.array(velocity_estimate[0:-1]), Q[0][0])
+        plot_ness(ness_arr, q)
+        plot_nis(nis_arr, q)
+    return ness_arr, nis_arr
 
 
-def single_simulation_constant_acceleration_model(q, piecewise=False):
+def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False):
     """
     Constant (or piecewise) acceleration model eq 15 and 16
     :param piecewise: whether data should be generated with equations 15 or 16
@@ -185,25 +187,33 @@ def single_simulation_constant_acceleration_model(q, piecewise=False):
     position_gain = np.array(kalman_gain)[:, 0:1, :].reshape(number_of_samples)
     velocity_gain = np.array(kalman_gain)[:, 1:2, :].reshape(number_of_samples)
     acceleration_gain = np.array(kalman_gain)[:, 2:3, :].reshape(number_of_samples)
-    plot_kalman_gain(position_gain, "position")
-    plot_kalman_gain(velocity_gain, "velocity")
-    plot_kalman_gain(acceleration_gain, "acceleration")
+
     # X values
     position_true = X_true[0, :]
     velocity_true = X_true[1, :]
     acceleration_true = X_true[2, :]
-    plot_position_velocity_acceleration(position_true, velocity_true, acceleration_true,
-                                        np.array(position_estimate[0:-1]),
-                                        np.array(velocity_estimate[0:-1]), np.array(velocity_estimate[0:-1]), Q[0][0])
-    plot_ness(ness_arr, q)
-    plot_nis(nis_arr, q)
+    if plot:
+        plot_kalman_gain(position_gain, "position")
+        plot_kalman_gain(velocity_gain, "velocity")
+        plot_kalman_gain(acceleration_gain, "acceleration")
+        plot_position_velocity_acceleration(position_true, velocity_true, acceleration_true,
+                                            np.array(position_estimate[0:-1]),
+                                            np.array(velocity_estimate[0:-1]), np.array(velocity_estimate[0:-1]),
+                                            Q[0][0])
+        plot_ness(ness_arr, q)
+        plot_nis(nis_arr, q)
+    return ness_arr, nis_arr
+
+
+def monte_carlo_simulation_constant_velocity_model(q, number_of_runs=50, piecewise=False, ):
+    pass
 
 
 if __name__ == "__main__":
     number_samples_q = 1
     indices = random.sample(range(1, 10), number_samples_q)
     for q in indices:
-        # single_simulation_constant_velocity_model(q, piecewise=False)
-        # single_simulation_constant_velocity_model(q, piecewise=True)
+        single_simulation_constant_velocity_model(q, piecewise=False)
+        single_simulation_constant_velocity_model(q, piecewise=True)
         # single_simulation_constant_acceleration_model(q, piecewise=False)
-        single_simulation_constant_acceleration_model(q, piecewise=True)
+        # single_simulation_constant_acceleration_model(q, piecewise=True)
