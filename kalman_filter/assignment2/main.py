@@ -206,14 +206,28 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
 
 
 def monte_carlo_simulation_constant_velocity_model(q, number_of_runs=50, piecewise=False, ):
-    pass
+    ness_matrix = []
+    nis_matrix = []
+    for i in range(number_of_runs):
+        ness_arr_constant_velo, nis_arr_constant_velo = single_simulation_constant_velocity_model(q)
+        ness_matrix.append(ness_arr_constant_velo)
+        nis_matrix.append(nis_arr_constant_velo)
+    mean_ness = np.mean(ness_matrix, axis=0)
+    mean_nis = np.mean(nis_matrix, axis=0)
+    plot_ness(mean_ness, q, 0, 4, 1.5, 2.6)
+    plot_nis(mean_nis, q, 0, 2, 0.65, 1.43)
+    return mean_ness, mean_nis
 
 
 if __name__ == "__main__":
     number_samples_q = 1
     indices = random.sample(range(1, 10), number_samples_q)
     for q in indices:
-        single_simulation_constant_velocity_model(q, piecewise=False)
-        single_simulation_constant_velocity_model(q, piecewise=True)
+        # Single Simulations
+        # single_simulation_constant_velocity_model(q, piecewise=False)
+        # single_simulation_constant_velocity_model(q, piecewise=True)
         # single_simulation_constant_acceleration_model(q, piecewise=False)
         # single_simulation_constant_acceleration_model(q, piecewise=True)
+
+        # Multiple Simulations
+        monte_carlo_simulation_constant_velocity_model(1)

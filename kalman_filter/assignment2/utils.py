@@ -49,28 +49,34 @@ def plot_kalman_gain(kalman_gain, title=""):
     plt.show()
 
 
-def plot_ness(ness, q):
+def plot_ness(ness, q, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
     a = len(list(filter(lambda x: x > 6, ness)))
     print("greater than acceptable interval")
     print(a)
     plt.plot(ness, 'b', color='blue')
     plt.ylabel('NEES')
-    plt.ylim((0, 10))
-    plt.axhline(y=6)
+    plt.ylim((y_bottom_lim, y_top_lim))
+    if interval_bottom:
+        plt.axhline(y=interval_bottom)
+    if interval_top:
+        plt.axhline(y=interval_top)
     plt.xlabel('Time')
     plt.title("NEES ERROR Q={0}".format(q))
     plt.legend()
     plt.show()
 
 
-def plot_nis(nis, q):
+def plot_nis(nis, q, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
     a = len(list(filter(lambda x: x > 6, nis)))
     print("a")
     print(a)
     plt.plot(nis, 'b', color='blue')
     plt.ylabel('NIS')
-    plt.ylim((0, 10))
-    plt.axhline(y=6)
+    plt.ylim((y_bottom_lim, y_top_lim))
+    if interval_bottom:
+        plt.axhline(y=interval_bottom)
+    if interval_top:
+        plt.axhline(y=interval_top)
     plt.xlabel('Time')
     plt.title("NIS ERROR Q={0}".format(q))
     plt.legend()
