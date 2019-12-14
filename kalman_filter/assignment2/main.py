@@ -18,7 +18,7 @@ from assignment2.files.gen_data14_fun import get_generated_data_eq_14
 from assignment2.files.gen_data15_fun import get_generated_data_eq_15
 from assignment2.files.gen_data16_fun import get_generated_data_eq_16
 from assignment2.utils import NIS, NESS, plot_ness, plot_nis, plot_kalman_gain, plot_position_velocity, \
-    plot_position_velocity_acceleration, SAC, plot_error
+    plot_position_velocity_acceleration, SAC, plot_error, TA_NIS, TA_AC
 from statsUtils import gauss_pdf
 
 number_of_samples = 100
@@ -107,9 +107,15 @@ def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
     sac_arr = []
     aux_1 = []
     aux_2 = []
+    ta_nis = []
+    ta_ac = []
+    x_hat = []
+    P_hat = []
     first_time = True
     for i in range(number_of_samples):
         (X, P) = prediction_step(A, X, B, U, Q_try, P)
+        x_hat.append(X)
+        P_hat.append(P)
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
         position_estimate.append(X[0][0])
         velocity_estimate.append(X[1][0])
@@ -119,16 +125,22 @@ def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
             first_time = False
         else:
             r1, r2, r3 = SAC(C, aux_2[0], Z[i], aux_1[0], X)
+            if 2 <= len(x_hat) <= len(Z) - 1:
+                tac = TA_AC(C, Z[:len(x_hat)], x_hat)
+                ta_ac.append(tac)
+
             sac_arr.append([r1, r2, r3])
             aux_1 = [X]
             aux_2 = [Z[i]]
+
         x_true_i = np.array([[X_true[0][i]], [X_true[1][i]]])
         ness_arr.append(NESS(x_true_i, X, P).reshape(1)[0])
+        ta_nis.append(TA_NIS(C, Z[:i + 1], x_hat, P_hat, H, R)[0][0])
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
         kalman_gain.append(K)
 
     print("Kalman gain Q{0}".format(Q[0][0]))
-    print(kalman_gain)
+    # print(kalman_gain)
     # Gains
     position_gain = np.array(kalman_gain)[:, 0:1, :].reshape(number_of_samples)
     velocity_gain = np.array(kalman_gain)[:, 1:2, :].reshape(number_of_samples)
@@ -142,7 +154,7 @@ def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
                                np.array(velocity_estimate[0:-1]), Q[0][0])
         plot_ness(ness_arr, q)
         plot_nis(nis_arr, q)
-    return ness_arr, nis_arr, sac_arr
+    return ness_arr, nis_arr, sac_arr, ta_nis, ta_ac
 
 
 def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False):
@@ -187,10 +199,16 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
     nis_arr = []
     aux_1 = []
     aux_2 = []
+    ta_nis = []
+    ta_ac = []
+    x_hat = []
+    P_hat = []
     first_time = True
 
     for i in range(number_of_samples):
         (X, P) = prediction_step(A, X, B, U, Q_try, P)
+        x_hat.append(X)
+        P_hat.append(P)
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
         position_estimate.append(X[0][0])
         velocity_estimate.append(X[1][0])
@@ -201,17 +219,20 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
             first_time = False
         else:
             r1, r2, r3 = SAC(C, aux_2[0], Z[i], aux_1[0], X)
+            if 2 <= len(x_hat) <= len(Z) - 1:
+                tac = TA_AC(C, Z[:len(x_hat)], x_hat)
+                ta_ac.append(tac)
             sac_arr.append([r1, r2, r3])
             aux_1 = [X]
             aux_2 = [Z[i]]
         x_true_i = np.array([[X_true[0][i]], [X_true[1][i]], [X_true[2][i]]])
         ness_arr.append(NESS(x_true_i, X, P).reshape(1)[0])
-
+        ta_nis.append(TA_NIS(C, Z[:i + 1], x_hat, P_hat, H, R)[0][0])
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
         kalman_gain.append(K)
 
     print("Kalman gain Q{0}".format(Q[0][0]))
-    print(kalman_gain)
+    # print(kalman_gain)
     # Gains
     position_gain = np.array(kalman_gain)[:, 0:1, :].reshape(number_of_samples)
     velocity_gain = np.array(kalman_gain)[:, 1:2, :].reshape(number_of_samples)
@@ -231,7 +252,7 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
                                             Q[0][0])
         plot_ness(ness_arr, q)
         plot_nis(nis_arr, q)
-    return ness_arr, nis_arr, sac_arr
+    return ness_arr, nis_arr, sac_arr, ta_nis, ta_ac
 
 
 def get_res_pj(pj):
@@ -273,10 +294,38 @@ def monte_carlo_simulation_constant_velocity_model(q, isVeloConstant=True, numbe
         plot_error(mean_nis, q, "Time", "NIS", "{1} NIS ERROR Q={0}".format(q, model_name), 0, 2, 0.65, 1.43)
         plot_error(sac_result, q, "Time", "SAC", "{1} SAC ERROR Q={0}".format(q, model_name), -0.5, 1.5, -0.277, 0.277)
 
-
     # plot_ness(mean_ness, q, 0, 4, 1.5, 2.6)
     # plot_nis(mean_nis, q, 0, 2, 0.65, 1.43)
     return mean_ness, mean_nis
+
+
+def real_time_test_simulation_constant_velocity_model(q, isVeloConstant=True, number_of_runs=1, piecewise=False,
+                                                      model_name=''):
+    ta_nis_matrix = []
+
+    for i in range(number_of_runs):
+        ness_arr_constant_velo, nis_arr_constant_velo, sac_constant_velo, ta_nis, ta_ac = single_simulation_constant_velocity_model(
+            q,
+            piecewise=piecewise) if isVeloConstant else single_simulation_constant_acceleration_model(
+            q, piecewise=piecewise)
+
+        ta_nis_matrix.append(ta_nis)
+
+    np_tanis = np.array(ta_nis)
+    np_tac = np.array(ta_ac)
+    print("ta_nis {0}: {1}".format(model_name, ta_nis[len(ta_nis) - 1]))
+    print("ta_ac {0}: {1}".format(model_name, ta_ac[len(ta_ac) - 1]))
+
+    if isVeloConstant:
+        plot_error(np_tanis, q, "Time", "TA_NIS", "{1} TANIS ERROR Q={0}".format(q, model_name), 0, 2, 0.74, 1.3,
+                   True)
+        plot_error(np_tac, q, "Time", "TA_AC", "{1} TA_AC ERROR Q={0}".format(q, model_name), -1, 1, -0.196, 0.196,
+                   True)
+    else:
+        plot_error(np_tanis, q, "Time", "TA_NIS", "{1} TA_NIS ERROR Q={0}".format(q, model_name), 0, 5, 1.6, 2.16,
+                   True)
+        plot_error(np_tac, q, "Time", "TA_AC", "{1} TA_AC ERROR Q={0}".format(q, model_name), -1, 1, -0.196, 0.196, True)
+    return np_tanis
 
 
 if __name__ == "__main__":
@@ -289,16 +338,30 @@ if __name__ == "__main__":
         # single_simulation_constant_acceleration_model(q, piecewise=False)
         # single_simulation_constant_acceleration_model(q, piecewise=True)
 
-        # Multiple Simulations (Monte Carlo)
-        # Constant velocity piecewise false montecarlo
-        monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, False,
-                                                       'Constant Velocity pw false')
-        # Constant velocity piecewise true montecarlo
-        monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, True,
-                                                       'Constant Velocity pw true')
+        # # Multiple Simulations (Monte Carlo)
+        # # Constant velocity piecewise false montecarlo
+        # monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, False,
+        #                                                'Constant Velocity pw false')
+        # # Constant velocity piecewise true montecarlo
+        # monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, True,
+        #                                                'Constant Velocity pw true')
+        #
+        # # Constant acceleration piecewise false montecarlo
+        # monte_carlo_simulation_constant_velocity_model(1, False, number_of_runs_monte_carlo, False,
+        #                                                'Constant Acceleration pw false')
+        # monte_carlo_simulation_constant_velocity_model(1, False, number_of_runs_monte_carlo, True,
+        #                                                'Constant Acceleration pw true')
 
-        # Constant acceleration piecewise false montecarlo
-        monte_carlo_simulation_constant_velocity_model(1, False, number_of_runs_monte_carlo, False,
-                                                       'Constant Acceleration pw false')
-        monte_carlo_simulation_constant_velocity_model(1, False, number_of_runs_monte_carlo, True,
-                                                       'Constant Acceleration pw true')
+        # Real time test
+        # Real time test constant velocity piece wise False
+        real_time_test_simulation_constant_velocity_model(1, True, 1, False,
+                                                          'RT Constant Velocity pw false')
+        # Real time test constant velocity piece wise True
+        real_time_test_simulation_constant_velocity_model(1, True, 1, True,
+                                                          'RT Constant Velocity pw true')
+        # Real time test constant acceleration piece wise False
+        real_time_test_simulation_constant_velocity_model(1, False, 1, False,
+                                                          'RT Constant Acceleration pw false')
+        # Real time test constant acceleration piece wise True
+        real_time_test_simulation_constant_velocity_model(1, False, 1, True,
+                                                          'RT Constant Acceleration pw true')

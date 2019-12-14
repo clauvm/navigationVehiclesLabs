@@ -83,17 +83,19 @@ def plot_nis(nis, q, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_t
     plt.show()
 
 
-def plot_error(error, q, x_label, y_label, title, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
+def plot_error(error, q, x_label, y_label, title, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6,
+               lines=True):
     # a = len(list(filter(lambda x: x > 6, error)))
     # print("greater than acceptable interval")
     # print(a)
     plt.plot(error, 'b', color='blue')
     plt.ylabel(y_label)
     plt.ylim((y_bottom_lim, y_top_lim))
-    if interval_bottom:
-        plt.axhline(y=interval_bottom)
-    if interval_top:
-        plt.axhline(y=interval_top)
+    if lines:
+        if interval_bottom:
+            plt.axhline(y=interval_bottom)
+        if interval_top:
+            plt.axhline(y=interval_top)
     plt.xlabel(x_label)
     plt.title(title)
     plt.legend()
@@ -143,3 +145,29 @@ def SAC(C, Z_k, Z_j, x_hat_k, x_hat_j):
     sum2 = np.matmul(z_tilde_k.T, z_tilde_k)[0][0]
     sum3 = np.matmul(z_tilde_j.T, z_tilde_j)[0][0]
     return sum1, sum2, sum3
+
+
+def TA_NIS(C, Z, x_hat, P, H, R):
+    sum = 0
+    K = len(Z)
+    for k in range(K):
+        z_tilde = Z[k] - np.matmul(C, x_hat[k])
+        s_k = np.linalg.multi_dot([C, P[k], C.T]) + np.linalg.multi_dot([H, R, H.T])
+        sum += np.linalg.multi_dot([z_tilde.T, np.linalg.inv(s_k), z_tilde])
+    return sum / K
+
+
+def TA_AC(C, Z, x):
+    sum1 = 0
+    sum2 = 0
+    sum3 = 0
+    K = len(Z)
+    for k in range(K):
+        if k + 1 < K:
+            z_tilde_k = Z[k] - np.matmul(C, x[k])
+            z_tilde_j = Z[k + 1] - np.matmul(C, x[k + 1])
+            sum1 += np.matmul(z_tilde_k.T, z_tilde_j)[0][0]
+            sum2 += np.matmul(z_tilde_k.T, z_tilde_k)[0][0]
+            sum3 += np.matmul(z_tilde_j.T, z_tilde_j)[0][0]
+
+    return sum1 * ((sum2 * sum3) ** (-1 / 2))
