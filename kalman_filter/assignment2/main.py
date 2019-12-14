@@ -16,6 +16,7 @@ import numpy as np
 from assignment2.files.gen_data13_fun import get_generated_data_eq_13
 from assignment2.files.gen_data14_fun import get_generated_data_eq_14
 from assignment2.files.gen_data15_fun import get_generated_data_eq_15
+from assignment2.files.gen_data16_fun import get_generated_data_eq_16
 from assignment2.utils import NIS, NESS, plot_ness, plot_nis, plot_kalman_gain, plot_position_velocity, \
     plot_position_velocity_acceleration
 from statsUtils import gauss_pdf
@@ -151,7 +152,8 @@ def single_simulation_constant_acceleration_model(q, piecewise=False):
     Q_try = np.array([[(T ** 5) / 20, (T ** 4) / 8, (T ** 3) / 6],
                       [(T ** 4) / 8, (T ** 3) / 3, (T ** 2) / 2],
                       [(T ** 3) / 6, (T ** 2) / 2, T]], dtype=float) * q
-    Z, X_true = get_generated_data_eq_15(Q[0][0], R[0][0])
+    Z, X_true = get_generated_data_eq_15(Q[0][0], R[0][0]) if not piecewise else get_generated_data_eq_16(Q[0][0],
+                                                                                                          R[0][0])
 
     X = np.array([[Z[0]], [(Z[1] - Z[0]) / T], [0]])
     position_estimate = [X[0][0]]
@@ -190,8 +192,9 @@ def single_simulation_constant_acceleration_model(q, piecewise=False):
     position_true = X_true[0, :]
     velocity_true = X_true[1, :]
     acceleration_true = X_true[2, :]
-    plot_position_velocity_acceleration(position_true, velocity_true, acceleration_true, np.array(position_estimate[0:-1]),
-                           np.array(velocity_estimate[0:-1]), np.array(velocity_estimate[0:-1]), Q[0][0])
+    plot_position_velocity_acceleration(position_true, velocity_true, acceleration_true,
+                                        np.array(position_estimate[0:-1]),
+                                        np.array(velocity_estimate[0:-1]), np.array(velocity_estimate[0:-1]), Q[0][0])
     plot_ness(ness_arr, q)
     plot_nis(nis_arr, q)
 
@@ -200,6 +203,7 @@ if __name__ == "__main__":
     number_samples_q = 1
     indices = random.sample(range(1, 10), number_samples_q)
     for q in indices:
-        # single_simulation_constant_velocity_model(q, False)
-        # single_simulation_constant_velocity_model(q, True)
-        single_simulation_constant_acceleration_model(q)
+        # single_simulation_constant_velocity_model(q, piecewise=False)
+        # single_simulation_constant_velocity_model(q, piecewise=True)
+        # single_simulation_constant_acceleration_model(q, piecewise=False)
+        single_simulation_constant_acceleration_model(q, piecewise=True)
