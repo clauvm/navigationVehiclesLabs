@@ -39,12 +39,12 @@ def plot_covariance(covariance):
     plt.show()
 
 
-def plot_kalman_gain(kalman_gain):
+def plot_kalman_gain(kalman_gain, title=""):
     plt.plot(kalman_gain, 'b', color='blue')
     plt.ylabel('gain')
     plt.ylim((0, 1))
     plt.xlabel('Time')
-    plt.title("Kalman Gain (K)")
+    plt.title("Kalman Gain (K) {0}".format(title))
     plt.legend()
     plt.show()
 
@@ -80,6 +80,18 @@ def plot_nis(nis, q):
 def plot_position_velocity(position_true, velocity_true, position_estimate, velocity_estimate, Q):
     plt.plot(position_true, velocity_true, 'b', color='blue')
     plt.plot(position_estimate, velocity_estimate, '--', color='red')
+    plt.ylabel('Velocity (m/s)')
+    # plt.ylim((0, 1))
+    plt.xlabel('Position x[m]')
+    plt.title("State trajectory Q={0}".format(Q))
+    plt.legend()
+    plt.show()
+
+
+def plot_position_velocity_acceleration(position_true, velocity_true, acceleration_true, position_estimate,
+                                        velocity_estimate, acceleration_estimate, Q):
+    plt.plot(position_true, velocity_true, acceleration_true, 'b', color='blue')
+    plt.plot(position_estimate, velocity_estimate, acceleration_estimate, '--', color='red')
     plt.ylabel('Velocity (m/s)')
     # plt.ylim((0, 1))
     plt.xlabel('Position x[m]')

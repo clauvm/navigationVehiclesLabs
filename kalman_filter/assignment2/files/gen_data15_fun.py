@@ -42,27 +42,27 @@ def get_generated_data_eq_15(Q, R):
     v = np.random.normal(0.0, np.sqrt(R), N)  # measurement noise
     z = x[0, :] + v  # position measurements assuming C = [1 0 0]
 
-    f1 = plt.figure()
-    plt.plot(z, label='linear')
-    plt.xlabel('Time [s]')
-    plt.ylabel('Measured position')
-    f1.show()
-
-    f2 = plt.figure()
-    plt.plot(x[0, :], label='linear')
-    plt.xlabel('Time [s]')
-    plt.ylabel('True position [m]')
-    f2.show()
-
-    f3 = plt.figure()
-    plt.plot(x[1, :], label='linear')
-    plt.xlabel('Time [s]')
-    plt.ylabel('True speed [m/s]')
-    f3.show()
-
-    f4 = plt.figure()
-    plt.plot(x[2, :], label='linear')
-    plt.xlabel('Time [s]')
-    plt.ylabel('True acceleration [m/s^2]')
-    f4.show()
+    # f1 = plt.figure()
+    # plt.plot(z, label='linear')
+    # plt.xlabel('Time [s]')
+    # plt.ylabel('Measured position')
+    # f1.show()
+    #
+    # f2 = plt.figure()
+    # plt.plot(x[0, :], label='linear')
+    # plt.xlabel('Time [s]')
+    # plt.ylabel('True position [m]')
+    # f2.show()
+    #
+    # f3 = plt.figure()
+    # plt.plot(x[1, :], label='linear')
+    # plt.xlabel('Time [s]')
+    # plt.ylabel('True speed [m/s]')
+    # f3.show()
+    #
+    # f4 = plt.figure()
+    # plt.plot(x[2, :], label='linear')
+    # plt.xlabel('Time [s]')
+    # plt.ylabel('True acceleration [m/s^2]')
+    # f4.show()
     return z, x

@@ -16,7 +16,8 @@ import numpy as np
 from assignment2.files.gen_data13_fun import get_generated_data_eq_13
 from assignment2.files.gen_data14_fun import get_generated_data_eq_14
 from assignment2.files.gen_data15_fun import get_generated_data_eq_15
-from assignment2.utils import NIS, NESS, plot_ness, plot_nis, plot_kalman_gain, plot_position_velocity
+from assignment2.utils import NIS, NESS, plot_ness, plot_nis, plot_kalman_gain, plot_position_velocity, \
+    plot_position_velocity_acceleration
 from statsUtils import gauss_pdf
 
 number_of_samples = 100
@@ -116,46 +117,51 @@ def single_simulation_constant_velocity_model(q, piecewise=False):
     # Gains
     position_gain = np.array(kalman_gain)[:, 0:1, :].reshape(number_of_samples)
     velocity_gain = np.array(kalman_gain)[:, 1:2, :].reshape(number_of_samples)
-    plot_kalman_gain(position_gain)
-    plot_kalman_gain(velocity_gain)
+    plot_kalman_gain(position_gain, "position")
+    plot_kalman_gain(velocity_gain, "velocity")
     # X values
     position_true = X_true[0, :]
     velocity_true = X_true[1, :]
-    X_hat = np.array([position_estimate[0:-1], velocity_estimate[0:-1]])
-    # nes = NESS(X_true, X_hat, P)
     plot_position_velocity(position_true, velocity_true, np.array(position_estimate[0:-1]),
                            np.array(velocity_estimate[0:-1]), Q[0][0])
     plot_ness(ness_arr, q)
     plot_nis(nis_arr, q)
 
 
-def single_simulation_constant_acceleration_model(q):
+def single_simulation_constant_acceleration_model(q, piecewise=False):
+    """
+    Constant (or piecewise) acceleration model eq 15 and 16
+    :param piecewise: whether data should be generated with equations 15 or 16
+    :param q:
+    """
     T = 1.0
     A = np.array([[1, T, T ** 2 / 2],
                   [0, 1, T],
                   [0, 0, 1]], dtype=float)
     print("A shape: ", A.shape)
-    B = np.array([[0], [0]])
+    B = np.array([[0], [0], [0]])
     U = np.array([[0], [0]])
     print("B shape: ", B.shape)
     C = np.array([[1, 0, 0]])
     print("C shape: ", C.shape)
-    G = np.array([[T ** 2 / 2], [T], [1]])
-    print("G shape: ", G.shape)
+
     H = np.array([[1]])
     R = np.array([[1]])
     Q = np.array([[q]])
-    Q_try = np.array([[T ** 5 / 20, T ** 4 / 8, T ** 3 / 6],
-                      [T ** 4 / 8, T ** 3 / 3, T ** 2 / 2],
-                      [T ** 3 / 6, T ** 2 / 2, T]], dtype=float) * q
+    Q_try = np.array([[(T ** 5) / 20, (T ** 4) / 8, (T ** 3) / 6],
+                      [(T ** 4) / 8, (T ** 3) / 3, (T ** 2) / 2],
+                      [(T ** 3) / 6, (T ** 2) / 2, T]], dtype=float) * q
     Z, X_true = get_generated_data_eq_15(Q[0][0], R[0][0])
 
-    X = np.array([[Z[0]], [(Z[1] - Z[0]) / T], [(Z[2] - Z[1] - Z[0]) / T]])
+    X = np.array([[Z[0]], [(Z[1] - Z[0]) / T], [0]])
     position_estimate = [X[0][0]]
     velocity_estimate = [X[1][0]]
     acceleration_estimate = [X[2][0]]
-    P = np.linalg.inv(np.array([[R[0][0], R[0][0] / T], [R[0][0] / T, (2 * R[0][0]) / (T ** 2)]]))
-    N_iteration = 100
+    P = np.linalg.inv(np.array(
+        [[R[0][0], R[0][0] / T, (2 * R[0][0]) / T ** 2],
+         [R[0][0] / T, (2 * R[0][0]) / (T ** 2), (3 * R[0][0]) / (T ** 3)],
+         [(2 * R[0][0]) / (T ** 2), (3 * R[0][0]) / (T ** 3), 0]
+         ]))
     filter_estimate = []
     kalman_gain = []
     ness_arr = []
@@ -165,8 +171,8 @@ def single_simulation_constant_acceleration_model(q):
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
         position_estimate.append(X[0][0])
         velocity_estimate.append(X[1][0])
-        acceleration_estimate = [X[2][0]]
-        x_true_i = np.array([[X_true[0][i]], [X_true[1][i]]])
+        acceleration_estimate.append([X[2][0]])
+        x_true_i = np.array([[X_true[0][i]], [X_true[1][i]], [X_true[2][i]]])
         ness_arr.append(NESS(x_true_i, X, P).reshape(1)[0])
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
         kalman_gain.append(K)
@@ -177,16 +183,15 @@ def single_simulation_constant_acceleration_model(q):
     position_gain = np.array(kalman_gain)[:, 0:1, :].reshape(number_of_samples)
     velocity_gain = np.array(kalman_gain)[:, 1:2, :].reshape(number_of_samples)
     acceleration_gain = np.array(kalman_gain)[:, 2:3, :].reshape(number_of_samples)
-    # plot_kalman_gain(position_gain)
-    # plot_kalman_gain(velocity_gain)
+    plot_kalman_gain(position_gain, "position")
+    plot_kalman_gain(velocity_gain, "velocity")
+    plot_kalman_gain(acceleration_gain, "acceleration")
     # X values
     position_true = X_true[0, :]
     velocity_true = X_true[1, :]
     acceleration_true = X_true[2, :]
-    X_hat = np.array([position_estimate[0:-1], velocity_estimate[0:-1], acceleration_estimate[0:-1]])
-    # nes = NESS(X_true, X_hat, P)
-    # plot_position_velocity(position_true, velocity_true, np.array(position_estimate[0:-1]),
-    #                        np.array(velocity_estimate[0:-1]), Q[0][0])
+    plot_position_velocity_acceleration(position_true, velocity_true, acceleration_true, np.array(position_estimate[0:-1]),
+                           np.array(velocity_estimate[0:-1]), np.array(velocity_estimate[0:-1]), Q[0][0])
     plot_ness(ness_arr, q)
     plot_nis(nis_arr, q)
 
@@ -195,6 +200,6 @@ if __name__ == "__main__":
     number_samples_q = 1
     indices = random.sample(range(1, 10), number_samples_q)
     for q in indices:
-        single_simulation_constant_velocity_model(q, False)
-        single_simulation_constant_velocity_model(q, True)
-        # single_simulation_constant_acceleration_model(q)
+        # single_simulation_constant_velocity_model(q, False)
+        # single_simulation_constant_velocity_model(q, True)
+        single_simulation_constant_acceleration_model(q)
