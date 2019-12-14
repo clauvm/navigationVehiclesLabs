@@ -83,6 +83,23 @@ def plot_nis(nis, q, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_t
     plt.show()
 
 
+def plot_error(error, q, x_label, y_label, title, y_bottom_lim=0, y_top_lim=10, interval_bottom=6, interval_top=6):
+    # a = len(list(filter(lambda x: x > 6, error)))
+    # print("greater than acceptable interval")
+    # print(a)
+    plt.plot(error, 'b', color='blue')
+    plt.ylabel(y_label)
+    plt.ylim((y_bottom_lim, y_top_lim))
+    if interval_bottom:
+        plt.axhline(y=interval_bottom)
+    if interval_top:
+        plt.axhline(y=interval_top)
+    plt.xlabel(x_label)
+    plt.title(title)
+    plt.legend()
+    plt.show()
+
+
 def plot_position_velocity(position_true, velocity_true, position_estimate, velocity_estimate, Q):
     plt.plot(position_true, velocity_true, 'b', color='blue')
     plt.plot(position_estimate, velocity_estimate, '--', color='red')
@@ -117,3 +134,12 @@ def NIS(C, P, Z, x_hat, H, R):
     z_tilde = Z - np.matmul(C, x_hat)
     s = np.linalg.multi_dot([C, P, C.T]) + np.linalg.multi_dot([H, R, H.T])
     return np.linalg.multi_dot([z_tilde.T, np.linalg.inv(s), z_tilde])
+
+
+def SAC(C, Z_k, Z_j, x_hat_k, x_hat_j):
+    z_tilde_k = Z_k - np.matmul(C, x_hat_k)
+    z_tilde_j = Z_j - np.matmul(C, x_hat_j)
+    sum1 = np.matmul(z_tilde_k.T, z_tilde_j)[0][0]
+    sum2 = np.matmul(z_tilde_k.T, z_tilde_k)[0][0]
+    sum3 = np.matmul(z_tilde_j.T, z_tilde_j)[0][0]
+    return sum1, sum2, sum3

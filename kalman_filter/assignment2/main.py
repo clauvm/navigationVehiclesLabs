@@ -18,10 +18,11 @@ from assignment2.files.gen_data14_fun import get_generated_data_eq_14
 from assignment2.files.gen_data15_fun import get_generated_data_eq_15
 from assignment2.files.gen_data16_fun import get_generated_data_eq_16
 from assignment2.utils import NIS, NESS, plot_ness, plot_nis, plot_kalman_gain, plot_position_velocity, \
-    plot_position_velocity_acceleration
+    plot_position_velocity_acceleration, SAC, plot_error
 from statsUtils import gauss_pdf
 
 number_of_samples = 100
+number_of_runs_monte_carlo = 50
 
 
 def prediction_step(A, x_hat_previous, B, control_input, Q, P_previous):
@@ -103,11 +104,24 @@ def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
     kalman_gain = []
     ness_arr = []
     nis_arr = []
+    sac_arr = []
+    aux_1 = []
+    aux_2 = []
+    first_time = True
     for i in range(number_of_samples):
         (X, P) = prediction_step(A, X, B, U, Q_try, P)
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
         position_estimate.append(X[0][0])
         velocity_estimate.append(X[1][0])
+        if first_time:
+            aux_1.append(X)
+            aux_2.append(Z[i])
+            first_time = False
+        else:
+            r1, r2, r3 = SAC(C, aux_2[0], Z[i], aux_1[0], X)
+            sac_arr.append([r1, r2, r3])
+            aux_1 = [X]
+            aux_2 = [Z[i]]
         x_true_i = np.array([[X_true[0][i]], [X_true[1][i]]])
         ness_arr.append(NESS(x_true_i, X, P).reshape(1)[0])
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
@@ -128,7 +142,7 @@ def single_simulation_constant_velocity_model(q, piecewise=False, plot=False):
                                np.array(velocity_estimate[0:-1]), Q[0][0])
         plot_ness(ness_arr, q)
         plot_nis(nis_arr, q)
-    return ness_arr, nis_arr
+    return ness_arr, nis_arr, sac_arr
 
 
 def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False):
@@ -169,15 +183,30 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
     filter_estimate = []
     kalman_gain = []
     ness_arr = []
+    sac_arr = []
     nis_arr = []
+    aux_1 = []
+    aux_2 = []
+    first_time = True
+
     for i in range(number_of_samples):
         (X, P) = prediction_step(A, X, B, U, Q_try, P)
         nis_arr.append(NIS(C, P, Z[i], X, H, R).reshape(1)[0])
         position_estimate.append(X[0][0])
         velocity_estimate.append(X[1][0])
         acceleration_estimate.append([X[2][0]])
+        if len(aux_1) == 0:
+            aux_1.append(X)
+            aux_2.append(Z[i])
+        else:
+            if first_time:
+                r1, r2, r3 = SAC(C, aux_2[0], Z[i], aux_1[0], X)
+                sac_arr.append([r1, r2, r3])
+            aux_1 = []
+            aux_2 = []
         x_true_i = np.array([[X_true[0][i]], [X_true[1][i]], [X_true[2][i]]])
         ness_arr.append(NESS(x_true_i, X, P).reshape(1)[0])
+
         (X, P, K, IM, IS, LH) = update_step(X, P, Z[i].reshape(1, 1), C, R)
         kalman_gain.append(K)
 
@@ -205,17 +234,41 @@ def single_simulation_constant_acceleration_model(q, piecewise=False, plot=False
     return ness_arr, nis_arr
 
 
-def monte_carlo_simulation_constant_velocity_model(q, number_of_runs=50, piecewise=False, ):
+def get_res_pj(pj):
+    res = np.sum(pj, axis=0)
+    return res[0] * ((res[1] * res[2]) ** (-1 / 2))
+
+
+def get_sac(sac_matrix):
+    result = []
+    for pj in sac_matrix:
+        result.append(get_res_pj(pj))
+    return result
+
+
+def monte_carlo_simulation_constant_velocity_model(q, isVeloConstant=True, number_of_runs=50, piecewise=False,
+                                                   model_name=''):
     ness_matrix = []
     nis_matrix = []
+    sac_matrix = []
+
     for i in range(number_of_runs):
-        ness_arr_constant_velo, nis_arr_constant_velo = single_simulation_constant_velocity_model(q)
+        ness_arr_constant_velo, nis_arr_constant_velo, sac_constant_velo = single_simulation_constant_velocity_model(q,
+                                                                                                                     piecewise=piecewise) if isVeloConstant else single_simulation_constant_acceleration_model(
+            q, piecewise=piecewise)
         ness_matrix.append(ness_arr_constant_velo)
         nis_matrix.append(nis_arr_constant_velo)
+        sac_matrix.append(sac_constant_velo)
     mean_ness = np.mean(ness_matrix, axis=0)
     mean_nis = np.mean(nis_matrix, axis=0)
-    plot_ness(mean_ness, q, 0, 4, 1.5, 2.6)
-    plot_nis(mean_nis, q, 0, 2, 0.65, 1.43)
+    sac_np = np.array(sac_matrix).reshape(99, 50, 3)
+    sac_result = np.array(get_sac(sac_np))
+    plot_error(mean_ness, q, "Time", "NEES", "{1} NEES ERROR Q={0}".format(q, model_name), 0, 4, 1.5, 2.6)
+    plot_error(mean_nis, q, "Time", "NIS", "{1} NIS ERROR Q={0}".format(q, model_name), 0, 2, 0.65, 1.43)
+    plot_error(sac_result, q, "Time", "SAC", "{1} SAC ERROR Q={0}".format(q, model_name), -0.5, 1.5, -0.277, 0.277)
+
+    # plot_ness(mean_ness, q, 0, 4, 1.5, 2.6)
+    # plot_nis(mean_nis, q, 0, 2, 0.65, 1.43)
     return mean_ness, mean_nis
 
 
@@ -229,5 +282,7 @@ if __name__ == "__main__":
         # single_simulation_constant_acceleration_model(q, piecewise=False)
         # single_simulation_constant_acceleration_model(q, piecewise=True)
 
-        # Multiple Simulations
-        monte_carlo_simulation_constant_velocity_model(1)
+        # Multiple Simulations (Monte Carlo)
+        monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, False,
+                                                       'Constant Velocity pw false')
+        monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, True, 'Constant Velocity pw true')
