@@ -265,11 +265,11 @@ def monte_carlo_simulation_constant_velocity_model(q, isVeloConstant=True, numbe
     sac_result = np.array(get_sac(sac_np))
 
     if isVeloConstant:
-        plot_error(mean_ness, q, "Time", "NEES", "{1} NEES ERROR Q={0}".format(q, model_name), 2, 4, 1.5, 2.6)
+        plot_error(mean_ness, q, "Time", "NEES", "{1} NEES ERROR Q={0}".format(q, model_name), 0, 4, 1.5, 2.6)
         plot_error(mean_nis, q, "Time", "NIS", "{1} NIS ERROR Q={0}".format(q, model_name), 0, 2, 0.65, 1.43)
         plot_error(sac_result, q, "Time", "SAC", "{1} SAC ERROR Q={0}".format(q, model_name), -0.5, 1.5, -0.277, 0.277)
     else:
-        plot_error(mean_ness, q, "Time", "NEES", "{1} NEES ERROR Q={0}".format(q, model_name), 0, 4, 2.36, 3.7)
+        plot_error(mean_ness, q, "Time", "NEES", "{1} NEES ERROR Q={0}".format(q, model_name), 2, 4, 2.36, 3.7)
         plot_error(mean_nis, q, "Time", "NIS", "{1} NIS ERROR Q={0}".format(q, model_name), 0, 2, 0.65, 1.43)
         plot_error(sac_result, q, "Time", "SAC", "{1} SAC ERROR Q={0}".format(q, model_name), -0.5, 1.5, -0.277, 0.277)
 
@@ -291,11 +291,11 @@ if __name__ == "__main__":
 
         # Multiple Simulations (Monte Carlo)
         # Constant velocity piecewise false montecarlo
-        # monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, False,
-        #                                                'Constant Velocity pw false')
-        # # Constant velocity piecewise true montecarlo
-        # monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, True,
-        #                                                'Constant Velocity pw true')
+        monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, False,
+                                                       'Constant Velocity pw false')
+        # Constant velocity piecewise true montecarlo
+        monte_carlo_simulation_constant_velocity_model(1, True, number_of_runs_monte_carlo, True,
+                                                       'Constant Velocity pw true')
 
         # Constant acceleration piecewise false montecarlo
         monte_carlo_simulation_constant_velocity_model(1, False, number_of_runs_monte_carlo, False,
