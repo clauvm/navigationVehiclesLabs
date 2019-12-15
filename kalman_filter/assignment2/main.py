@@ -7,8 +7,8 @@ Mohamed.laaraiedh@univ-rennes1.fr
 Code was adapted to follow the notation of the course assignment
 """
 import random
-
-from numpy.linalg import inv
+import math
+from numpy.linalg import inv, det
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,6 +22,7 @@ from assignment2.utils import NIS, NESS, plot_ness, plot_nis, plot_kalman_gain, 
 
 number_of_samples = 100
 number_of_runs_monte_carlo = 50
+
 
 def gauss_pdf(X, M, S):
     """
