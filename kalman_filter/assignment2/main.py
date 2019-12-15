@@ -19,10 +19,34 @@ from assignment2.files.gen_data15_fun import get_generated_data_eq_15
 from assignment2.files.gen_data16_fun import get_generated_data_eq_16
 from assignment2.utils import NIS, NESS, plot_ness, plot_nis, plot_kalman_gain, plot_position_velocity, \
     plot_position_velocity_acceleration, SAC, plot_error, TA_NIS, TA_AC
-from statsUtils import gauss_pdf
 
 number_of_samples = 100
 number_of_runs_monte_carlo = 50
+
+def gauss_pdf(X, M, S):
+    """
+    Computes the Predictive probability (likelihood) of measurement
+    :param X: measurement vector
+    :param M: Mean of predictive distribution of measurement vector
+    :param S: the Covariance or predictive mean of measurement vector
+    :return: Gaussian probability distribution
+    """
+    if M.shape[1] == 1:
+        DX = X - np.tile(M, X.shape[1])
+        E = 0.5 * np.sum(DX * (np.dot(inv(S), DX)), axis=0)
+        E = E + 0.5 * M.shape[0] * np.log(2 * np.pi) + 0.5 * np.log(det(S))
+        P = np.exp(-E)
+    elif X.shape[1] == 1:
+        DX = np.tile(X, M.shape[1]) - M
+        E = 0.5 * np.sum(DX * (np.dot(inv(S), DX)), axis=0)
+        E = E + 0.5 * M.shape[0] * np.log(2 * np.pi) + 0.5 * np.log(det(S))
+        P = np.exp(-E)
+    else:
+        DX = X - M
+        E = 0.5 * np.dot(DX.T, np.dot(inv(S), DX))
+        E = E + 0.5 * M.shape[0] * np.log(2 * np.pi) + 0.5 * np.log(det(S))
+        P = np.exp(-E)
+    return (P[0], E[0])
 
 
 def prediction_step(A, x_hat_previous, B, control_input, Q, P_previous):
