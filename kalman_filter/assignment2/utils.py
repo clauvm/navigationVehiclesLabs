@@ -126,7 +126,7 @@ def plot_position_velocity_acceleration(position_true, velocity_true, accelerati
 
 def NESS(x, x_hat, p):
     x_tilde = x - x_hat
-    p_times_x_tilde = np.matmul(np.linalg.inv(p), x_tilde)
+    # p_times_x_tilde = np.matmul(np.linalg.inv(p), x_tilde)
     # return np.matmul(x_tilde.T, p_times_x_tilde)
     return np.linalg.multi_dot([x_tilde.T, np.linalg.inv(p), x_tilde])
 
